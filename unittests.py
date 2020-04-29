@@ -3,6 +3,7 @@ import copy
 
 import GRTensors as bt
 
+
 def InitTensor():
     print("Starting Test: Init Tensor...")
     a = sympy.Symbol('a')
@@ -11,9 +12,11 @@ def InitTensor():
     test_vals = sympy.Matrix([[a,0],[0,b]])
     
     A = bt.GRTensor(test_ind,test_vals)
-    assert A.get_indices() == test_ind
-    assert A.get_vals() == test_vals
-    assert A.get_rank() == 2
+
+    assert A.ind == test_ind
+    assert A.vals == test_vals
+    assert A.rank == 2
+
     print("Test: Init Tensor - Passed")
     return 1
 
@@ -23,10 +26,8 @@ def InitMetric():
     b = sympy.Symbol('b')
     coords = [a,b]
     test_metric = sympy.Matrix([[a,0],[0,b]])
-    g = bt.GRMetric(coords)
-    assert g.lowered() == sympy.zeros(2)
-    G = bt.GRMetric(coords,metric=test_metric)
-    assert G.lowered() == test_metric
+    g = bt.GRMetric(coords,metric=test_metric)
+    assert g.lowered == test_metric
     print("Test: Init Metric - Passed")
     return 1
 
@@ -37,7 +38,7 @@ def RaiseMetric():
     coords = [a,b]
     test_metric = sympy.Matrix([[a,0],[0,b]])
     G = bt.GRMetric(coords,metric=test_metric)
-    assert G.raised() == test_metric.inv()
+    assert G.raised == test_metric.inv()
     print("Test: Raise Metric - Passed")
     return 1
     
@@ -48,7 +49,7 @@ def ChristoffelTest():
     t,x,y,z = sympy.symbols('t x y z')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
     g = bt.GRMetric([theta, phi], metric=test_metric)
-    ch = g.connection().get_vals()
+    ch = g.Christoffel_symbols.vals
     assert ch[0,1,1] == -sympy.sin(theta)*sympy.cos(theta)
     assert ch[1,0,1] == ch[1,1,0] 
     assert ch[1,1,0] == 1.0*sympy.cos(theta)/sympy.sin(theta)
@@ -60,7 +61,7 @@ def RiemannTest():
     theta, phi = sympy.symbols(r'\theta \phi')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
     g = bt.GRMetric([theta, phi], metric=test_metric)
-    R = g.curvature().get_vals()
+    R = g.Riemann_tensor.vals
     print("Test: Riemann Curvature- Passed")
     return 1
 
@@ -70,7 +71,7 @@ def RiemannLowered():
     sigma, alpha, mu, nu = sympy.symbols(r'\sigma \alpha \mu \nu')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
     g = bt.GRMetric([theta, phi], metric=test_metric)
-    R = g.curvature()
+    R = g.Riemann_tensor
     R.lower_index(sigma,g)
     print("Test: Riemann Lowered - Passed")
     return 1
@@ -80,7 +81,7 @@ def RicciTensor():
     theta, phi = sympy.symbols(r'\theta \phi')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
     g = bt.GRMetric([theta, phi], metric=test_metric)
-    R2 = g.ricci_tensor()
+    R2 = g.Ricci_tensor
     print("Test: Ricci Tensor - Passed")
     return 1
 
@@ -89,7 +90,7 @@ def RicciScalar():
     theta, phi = sympy.symbols(r'\theta \phi')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
     g = bt.GRMetric([theta, phi], metric=test_metric)
-    R0 = g.ricci_scalar()
+    R0 = g.Ricci_scalar
     assert R0 == 2.0
     print("Test: Ricci Scalar - Passed")
     return 1
@@ -98,10 +99,10 @@ def LineElement():
     print("Starting Test: Line Element...")
     t, x, y, z = sympy.symbols("t x y z")
     dt, dx, dy, dz = sympy.symbols('dt dx dy dz')
-    eta = bt.GRMetric([t, x, y, z],[[-1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
-    dx = bt.GRTensor([eta],[dt, dx, dy, dz])
-    rhs = sympy.tensorcontraction(sympy.tensorproduct(eta.lowered(),dx.get_vals()),(1,2))
-    rhs = sympy.tensorcontraction(sympy.tensorproduct(rhs,dx.get_vals()),(1,1))
+    eta = bt.GRMetric([t, x, y, z],sympy.Matrix([[-1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]))
+    dx = bt.GRTensor([eta],sympy.Array([dt, dx, dy, dz]))
+    rhs = sympy.tensorcontraction(sympy.tensorproduct(eta.lowered,dx.vals),(1,2))
+    rhs = sympy.tensorcontraction(sympy.tensorproduct(rhs,dx.vals),(0,1))
     return 1
 
 def UnitTests(tests):
