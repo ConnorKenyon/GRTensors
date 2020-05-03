@@ -14,6 +14,7 @@ class GRTensor:
         ind (list): a copy of the indices argument, containing the indices of the tensor.
         vals (sympy Array): an N-dimensional array containing the tensor values.
         rank (int): the rank of the tensor (number of indices)
+
     """
 
     def __init__(self,indices,tensor):
@@ -30,6 +31,7 @@ class GRTensor:
         Args:
             ind (sympy symbol): The symbolic index to be lowered.
             metric (GRMetric): The spacetime metric of the system.
+
         """
         sigma, alpha, mu, nu = sympy.symbols(r'\sigma \alpha \mu \nu')
         tmp = sympy.tensorproduct(metric.lowered,self.vals)
@@ -44,6 +46,7 @@ class GRTensor:
         Args:
             ind (sympy symbol): The symbolic index to be raised.
             metric (GRMetric): The spacetime metric of the system.
+
         """
         sigma, alpha, mu, nu = sympy.symbols(r'\sigma \alpha \mu \nu')
         tmp = sympy.tensorproduct(metric.raised,self.vals)
@@ -59,8 +62,7 @@ class GRMetric:
     """ A spacetime metric data type to handle calculations and metric properties.
 
     Args:
-        coords (list): a list of sympy symbols representing the coordinates of the
-            system. This determines the size of the metric.
+        coords (list): a list of sympy symbols representing the coordinates of the system. This determines the size of the metric.
         metric (sympy Array): a 2D array containing the metric values.
         preset (string): an optional argument to generate a common metric.
 
@@ -73,8 +75,8 @@ class GRMetric:
         Riemann_tensor (GRTensor): Riemann curvature tensor of the metric
         Ricci_tensor (GRTensor): Ricci tensor of the metric
         Ricci_scalar (sympy expression): Ricci scalar of the metric
-    """
 
+    """
     def __init__(self,coords, metric=None, preset=None):
         if metric and not preset:
             self.lowered=metric.copy()
@@ -113,6 +115,7 @@ class GRMetric:
 
     def curvature(self):
         """ Calculate the Riemann curvature tensor of the metric
+
         """
         sigma, alpha, mu, nu = sympy.symbols(r'\sigma \alpha \mu \nu')
         ch = self.connection().vals
@@ -129,8 +132,29 @@ class GRMetric:
                             R[a_,b_,c_,d_] -= ch[e_,b_,c_]*ch[a_,e_,d_]
         return GRTensor([sigma, alpha, mu, nu],R)
 
+    def geodesics(self):
+        """ Calculate the Geodesic equations of the spacetime metric using the formula d^2x^a/dt^2 + gamma^a_bc dx^b/dt dx^c/dt = 0
+        """
+        ch = self.connection().vals
+
+        t = sympy.Symbol('t')
+        coord_funcs = [sympy.Function(str(f))(t) for f in self.coords]
+        eqns = []
+
+        for a_ in range(self.dims):
+            for b_ in range(self.dims):
+                for c_ in range(self.dims):
+                    tmp1 = sympy.diff(sympy.diff(coord_funcs[a_],t),t)
+                    tmp2 = ch[a_,b_,c_]*sympy.diff(coord_funcs[b_],t)*sympy.diff(coord_funcs[c_],t)
+                    eqns.append(tmp1+tmp2)
+
+        return sympy.Array(eqns).reshape(self.dims,self.dims,self.dims)
+    
+
+
     def ricci_tensor(self):
         """ Calculate the Ricci curvature tensor of the metric
+
         """
         R = self.curvature()
         R2 = sympy.tensorcontraction(R.vals,(0,2))
@@ -139,6 +163,7 @@ class GRMetric:
 
     def ricci_scalar(self):
         """ Calculate the Ricci scalar of the metric
+
         """
         R2 = self.ricci_tensor()
         R2_ = R2.vals

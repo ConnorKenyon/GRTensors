@@ -81,7 +81,7 @@ def RicciTensor():
     theta, phi = sympy.symbols(r'\theta \phi')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
     g = bt.GRMetric([theta, phi], metric=test_metric)
-    R2 = g.Ricci_tensor
+    R2 = g.ricci_tensor
     print("Test: Ricci Tensor - Passed")
     return 1
 
@@ -97,13 +97,46 @@ def RicciScalar():
 
 def LineElement():
     print("Starting Test: Line Element...")
-    t, x, y, z = sympy.symbols("t x y z")
-    dt, dx, dy, dz = sympy.symbols('dt dx dy dz')
-    eta = bt.GRMetric([t, x, y, z],sympy.Matrix([[-1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]))
-    dx = bt.GRTensor([eta],sympy.Array([dt, dx, dy, dz]))
-    rhs = sympy.tensorcontraction(sympy.tensorproduct(eta.lowered,dx.vals),(1,2))
-    rhs = sympy.tensorcontraction(sympy.tensorproduct(rhs,dx.vals),(0,1))
+    try:
+        t, x, y, z = sympy.symbols("t x y z")
+        dt, dx, dy, dz = sympy.symbols('dt dx dy dz')
+        eta = bt.GRMetric([t, x, y, z],sympy.Matrix([[-1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]))
+        dx = bt.GRTensor([eta],sympy.Array([dt, dx, dy, dz]))
+        rhs_ = sympy.tensorcontraction(sympy.tensorproduct(eta.lowered,dx.vals),(1,2))
+        rhs = sympy.tensorcontraction(sympy.tensorproduct(rhs_,dx.vals),(0,1))
+        assert rhs + dt**2 - dx**2 - dy**2 - dz**2 == 0
+        print("Test: Line Element - Passed")
+        return 1
+    except:
+        print(rhs)
+        print(type(rhs))
+        print("Test: Line Element - Failed")
+        return 0
+
+def GeodesicTest():
+    print("Starting Test: Geodesics...")
+    theta, phi = sympy.symbols(r'\theta \phi')
+    test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
+    g = bt.GRMetric([theta, phi], metric=test_metric)
+    geo = g.geodesics()
+    # sympy.pprint(geo[0,1,1])
+    # sympy.pprint(geo[1,1,0])
+    print("Test: Geodesics - Passed")
     return 1
+
+def CovDeriv():
+    print("Starting Test: Covariant Derivative...")
+    x, y = sympy.symbols('x y')
+    test_metric = sympy.Matrix([[1,0],[0,x**2]])
+    g = bt.GRMetric([x,y],metric=test_metric)
+    a, b = sympy.symbols('a b')
+    A = bt.GRTensor([a],sympy.Array([x*sympy.cos(2*y),-x*x*sympy.sin(2*y)]))
+    A.raise_index(a,g)
+    Aab = bt.CovariantDerivative(b,[x,y],g,A)
+    # print(Aab.vals)
+    assert sympy.tensorcontraction(Aab.vals,(0,1)) == 0
+    return 1
+
 
 def UnitTests(tests):
     pass_count = 0
@@ -123,5 +156,7 @@ UnitTests([
     RiemannLowered,
     RicciTensor,
     RicciScalar,
-    LineElement
+    LineElement, 
+    GeodesicTest,
+    CovDeriv
     ])
