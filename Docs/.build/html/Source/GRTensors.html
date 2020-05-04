@@ -170,12 +170,32 @@
 <dl class="function">
 <dt id="GRTensors.functions.CovariantDerivative">
 <code class="descclassname">GRTensors.functions.</code><code class="descname">CovariantDerivative</code><span class="sig-paren">(</span><em>index</em>, <em>coords</em>, <em>metric</em>, <em>target</em>, <em>targettype='upper'</em><span class="sig-paren">)</span><a class="headerlink" href="#GRTensors.functions.CovariantDerivative" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Takes the covariant (semicolon) derivative of a tensor.</p>
+<dl class="docutils">
+<dt>Args: </dt>
+<dd>index (sympy.Symbol): index to add to the tensor
+coords (list(sympy.Symbol)): list of the coordinates to take derivatives with respect to
+metric (GRMetric): Metric to be differentiated with respect to (connection term)
+target (GRTensor): Target to be differentiated
+targettype (string): upper or lower, represents which index type the tensor is</dd>
+<dt>Returns:</dt>
+<dd>GRTensor of the covariant derivative</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="GRTensors.functions.TensorDerivative">
 <code class="descclassname">GRTensors.functions.</code><code class="descname">TensorDerivative</code><span class="sig-paren">(</span><em>index</em>, <em>coords</em>, <em>target</em><span class="sig-paren">)</span><a class="headerlink" href="#GRTensors.functions.TensorDerivative" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Takes a comma derivative of a tensor</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>index (sympy.Symbol): index to add to the tensor
+coords (list(sympy.Symbol)): list of the coordinates to take derivatives with respect to
+target (sympy expression or GRTensor.vals): Target to be differentiated</dd>
+<dt>Returns:</dt>
+<dd>GRTensor</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-GRTensors.objects">
