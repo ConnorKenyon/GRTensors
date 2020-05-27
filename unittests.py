@@ -4,7 +4,7 @@ import copy
 import GRTensors as bt
 
 
-def InitTensor():
+def test_GRTensor():
     print("Starting Test: Init Tensor...")
     a = sympy.Symbol('a')
     b = sympy.Symbol('b')
@@ -20,7 +20,7 @@ def InitTensor():
     print("Test: Init Tensor - Passed")
     return 1
 
-def InitMetric():
+def test_GRMetric():
     print("Starting Test: Init Metric...")
     a = sympy.Symbol('a')
     b = sympy.Symbol('b')
@@ -31,7 +31,7 @@ def InitMetric():
     print("Test: Init Metric - Passed")
     return 1
 
-def RaiseMetric():
+def test_raise_metric():
     print("Starting Test: Raise Metric...")
     a = sympy.Symbol('a')
     b = sympy.Symbol('b')
@@ -43,7 +43,7 @@ def RaiseMetric():
     return 1
     
 
-def ChristoffelTest():
+def test_christoffel():
     print("Starting Test: Christoffel Symbols...")
     theta, phi = sympy.symbols(r'\theta \phi')
     t,x,y,z = sympy.symbols('t x y z')
@@ -56,7 +56,7 @@ def ChristoffelTest():
     print("Test: Christoffel Symbols - Passed")
     return 1
 
-def RiemannTest():
+def test_riemann():
     print("Starting Test: Riemann Curvature...")
     theta, phi = sympy.symbols(r'\theta \phi')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
@@ -65,7 +65,7 @@ def RiemannTest():
     print("Test: Riemann Curvature- Passed")
     return 1
 
-def RiemannLowered():
+def test_riemann_lowered():
     print("Starting Test: Riemann Lowered...")
     theta, phi = sympy.symbols(r'\theta \phi')
     sigma, alpha, mu, nu = sympy.symbols(r'\sigma \alpha \mu \nu')
@@ -76,7 +76,7 @@ def RiemannLowered():
     print("Test: Riemann Lowered - Passed")
     return 1
 
-def RicciTensor():
+def test_ricci_tensor():
     print("Starting Test: Ricci Tensor...")
     theta, phi = sympy.symbols(r'\theta \phi')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
@@ -85,7 +85,7 @@ def RicciTensor():
     print("Test: Ricci Tensor - Passed")
     return 1
 
-def RicciScalar():
+def test_ricci_scalar():
     print("Starting Test: Ricci Scalar...")
     theta, phi = sympy.symbols(r'\theta \phi')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
@@ -95,7 +95,7 @@ def RicciScalar():
     print("Test: Ricci Scalar - Passed")
     return 1
 
-def LineElement():
+def test_line_element():
     print("Starting Test: Line Element...")
     try:
         t, x, y, z = sympy.symbols("t x y z")
@@ -113,7 +113,7 @@ def LineElement():
         print("Test: Line Element - Failed")
         return 0
 
-def GeodesicTest():
+def test_geodesic():
     print("Starting Test: Geodesics...")
     theta, phi = sympy.symbols(r'\theta \phi')
     test_metric = sympy.Matrix([[1,0],[0,sympy.sin(theta)**2]])
@@ -124,7 +124,7 @@ def GeodesicTest():
     print("Test: Geodesics - Passed")
     return 1
 
-def CovDeriv():
+def test_covdiff():
     print("Starting Test: Covariant Derivative...")
     x, y = sympy.symbols('x y')
     test_metric = sympy.Matrix([[1,0],[0,x**2]])
@@ -138,25 +138,25 @@ def CovDeriv():
     return 1
 
 
-def UnitTests(tests):
-    pass_count = 0
-    num_tests = len(tests)
-    for test in tests:
-        pass_count += test()
-
-    print("Unit Tests Complete: {} / {} Tests Passed".format(pass_count,num_tests))
-    return
-
-UnitTests([
-    InitTensor,
-    InitMetric,
-    RaiseMetric,
-    ChristoffelTest,
-    RiemannTest, 
-    RiemannLowered,
-    RicciTensor,
-    RicciScalar,
-    LineElement, 
-    GeodesicTest,
-    CovDeriv
-    ])
+# def UnitTests(tests):
+#     pass_count = 0
+#     num_tests = len(tests)
+#     for test in tests:
+#         pass_count += test()
+# 
+#     print("Unit Tests Complete: {} / {} Tests Passed".format(pass_count,num_tests))
+#     return
+# 
+# UnitTests([
+#     InitTensor,
+#     InitMetric,
+#     RaiseMetric,
+#     ChristoffelTest,
+#     RiemannTest, 
+#     RiemannLowered,
+#     RicciTensor,
+#     RicciScalar,
+#     LineElement, 
+#     GeodesicTest,
+#     CovDeriv
+#     ])
