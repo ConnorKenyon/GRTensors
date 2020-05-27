@@ -1,7 +1,7 @@
 import sympy 
 import copy
 
-import GRTensors as bt
+import ../GRTensors as bt
 
 
 def test_GRTensor():
