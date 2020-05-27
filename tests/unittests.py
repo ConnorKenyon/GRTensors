@@ -63,7 +63,7 @@ def test_riemann():
     g = bt.GRMetric([theta, phi], metric=test_metric)
     R = g.Riemann_tensor.vals
     print("Test: Riemann Curvature- Passed")
-    assert 2==3 # intentional failure
+    # assert 2==3 # intentional failure
     return 1
 
 def test_riemann_lowered():
