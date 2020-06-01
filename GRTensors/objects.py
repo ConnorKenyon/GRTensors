@@ -1,5 +1,4 @@
 import sympy
-import sympy.tensor.array
 import copy
 
 
@@ -101,8 +100,8 @@ class GRMetric:
         """ Calculate the Christoffel Symbols (Metric Connection) of a metric
 
         """
-        ch = sympy.array.MutableDenseNDimArray([0 for i in range(self.dims**3)])
-        ch = ch.reshape(self.dims,self.dims,self.dims)
+        ch = sympy.Array([0 for i in range(self.dims**3)])
+        ch = ch.reshape(self.dims,self.dims,self.dims).as_mutable()
         alpha, mu, nu = sympy.symbols(r'\alpha, \mu, \nu')
         for a_ in range(self.dims):
             for m_ in range(self.dims):
