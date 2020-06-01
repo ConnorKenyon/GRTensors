@@ -1,4 +1,5 @@
 import sympy
+import sympy.tensor.array
 import copy
 
 
