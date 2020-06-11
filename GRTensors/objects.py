@@ -18,12 +18,19 @@ class GRTensor:
     """
 
     def __init__(self,indices,tensor):
-        assert type(indices)==list
-        assert len(indices)==len(tensor.shape)
-        self.ind=indices.copy()
+        """ class initialization
+
+        Args: 
+            indices (dict): keys are the tensor symbol, the values are upper or lower 
+        """
+        self.indices=indices.copy()
         self.vals=copy.deepcopy(tensor)
-        self.rank=len(indices)
+        self.rank=len(indices.keys())
         return
+        
+
+    def __repr__(self):
+        return repr(self.vals)
 
     def lower_index(self,ind,metric):
         """Lower an index by contracting the tensor with the lowered spacetime metric.
@@ -33,11 +40,11 @@ class GRTensor:
             metric (GRMetric): The spacetime metric of the system.
 
         """
-        sigma, alpha, mu, nu = sympy.symbols(r'\sigma \alpha \mu \nu')
+        assert self.indices[ind]=='upper'
         tmp = sympy.tensorproduct(metric.lowered,self.vals)
-        # self.ind[self.ind.index(ind)] *= -1
-        tmp2 = sympy.tensorcontraction(tmp,(0,self.ind.index(ind)+2))
+        tmp2 = sympy.tensorcontraction(tmp,(0,list(self.indices.keys()).index(ind)+2))
         self.vals = copy.deepcopy(tmp2)
+        self.indices[ind]='lower'
         return 
 
     def raise_index(self,ind,metric):
@@ -48,11 +55,11 @@ class GRTensor:
             metric (GRMetric): The spacetime metric of the system.
 
         """
-        sigma, alpha, mu, nu = sympy.symbols(r'\sigma \alpha \mu \nu')
+        assert self.indices[ind]=='lower'
         tmp = sympy.tensorproduct(metric.raised,self.vals)
-        # self.ind[self.ind.index(ind)] *= -1
-        tmp2 = sympy.tensorcontraction(tmp,(0,self.ind.index(ind)+2))
+        tmp2 = sympy.tensorcontraction(tmp,(0,list(self.indices.keys()).index(ind)+2))
         self.vals = copy.deepcopy(tmp2)
+        self.indices[ind]='upper'
         return 
 
 
@@ -77,14 +84,8 @@ class GRMetric:
         Ricci_scalar (sympy expression): Ricci scalar of the metric
 
     """
-    def __init__(self,coords, metric=None, preset=None):
-        if metric and not preset:
-            self.lowered=metric.copy()
-        elif not metric and preset:
-            pass
-        else:
-            raise ValueError()
-
+    def __init__(self,coords, metric):
+        self.lowered=metric.copy()
         self.coords = coords[:]
         self.dims = len(coords)
         self.lowered = metric.copy()
@@ -111,7 +112,8 @@ class GRMetric:
                         sympy.diff(self.lowered[m_, lam], self.coords[n_]) +\
                         sympy.diff(self.lowered[n_, lam], self.coords[m_]) -\
                         sympy.diff(self.lowered[m_, n_], self.coords[lam])  )
-        return GRTensor([alpha, mu, nu],ch)
+
+        return GRTensor({alpha:'upper', mu:'lower', nu:'lower'},ch)
 
     def curvature(self):
         """ Calculate the Riemann curvature tensor of the metric
@@ -130,7 +132,7 @@ class GRMetric:
                         for e_ in range(self.dims):
                             R[a_,b_,c_,d_] += ch[e_,b_,d_]*ch[a_,e_,c_]
                             R[a_,b_,c_,d_] -= ch[e_,b_,c_]*ch[a_,e_,d_]
-        return GRTensor([sigma, alpha, mu, nu],R)
+        return GRTensor({sigma:'upper', alpha:'lower', mu:'lower', nu:'lower'},R)
 
     def geodesics(self):
         """ Calculate the Geodesic equations of the spacetime metric using the formula d^2x^a/dt^2 + gamma^a_bc dx^b/dt dx^c/dt = 0
