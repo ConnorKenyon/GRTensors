@@ -17,19 +17,28 @@ class GRTensor:
 
     """
 
-    def __init__(self,indices,tensor):
+    def __init__(self,indices,tensor_vals,associated_metric):
         """ class initialization
 
         Args: 
             indices (dict): keys are the tensor symbol, the values are upper or lower 
         """
-        self.indices=indices.copy()
-        self.vals=copy.deepcopy(tensor)
-        self.rank=len(indices.keys())
+        self.indices=indices[:]
+        self.rank=len(indices)
+        self.vals=copy.deepcopy(tensor_vals)
+        self.metric=associated_metric
         return
 
     def __repr__(self):
         return repr(self.vals)
+
+    
+    def raise_index(self,index):
+        if -index in self.indices:
+            self.indices[self.indices.index(-index)] = index
+            
+            #>> Do a tensor product then contraction with metric tensor
+
 
 
 ######################################################################
@@ -58,10 +67,28 @@ class GRMetric:
     def __repr__(self):
         return repr(self.metric)
 
-    def change_state(self,newstate):
+    def _change_state_(self,newstate):
         if self.state==newstate:
             return
         self.state = newstate
         self.metric = self.metric.inv().copy()
         return
 
+    def get_metric_lower(self):
+        if self.state=='lower':
+            return self.metric.copy()
+        elif self.state=='upper':
+            return self.metric.inv().copy()
+        else:
+            raise ValueError("Metric is in an invalid state")
+        
+    def get_metric_upper(self):
+        if self.state=='upper':
+            return self.metric.copy()
+        elif self.state=='lower':
+            return self.metric.inv().copy()
+        else:
+            raise ValueError("Metric is in an invalid state")
+
+
+# Make GRIndex class as wrapper for sympy.symbols with real=True and positive=True?
