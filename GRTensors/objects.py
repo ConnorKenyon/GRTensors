@@ -36,6 +36,11 @@ class GRTensor:
     def raise_index(self,index):
         if -index in self.indices:
             self.indices[self.indices.index(-index)] = index
+    
+    def set_indices(self,indices):
+        assert len(indices)==self.rank # Preserve Rank
+        self.indices=indices[:]
+        
             
             #>> Do a tensor product then contraction with metric tensor
 
@@ -90,5 +95,7 @@ class GRMetric:
         else:
             raise ValueError("Metric is in an invalid state")
 
+    def as_tensor(self,indices):
+        return GRTensor(indices, self.metric, self)
 
 # Make GRIndex class as wrapper for sympy.symbols with real=True and positive=True?
