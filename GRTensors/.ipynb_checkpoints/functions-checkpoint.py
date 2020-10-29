@@ -1,91 +1,38 @@
 import sympy
 import copy
-from GRTensors import GRTensor
+from GRTensors import Tensor
+from GRTensors import Metric
 
-def Index(index_string):
-    return sympy.Symbol(index_string, real=True, positive=True)
 
-def Indices(index_string):
-    return sympy.symbols(index_string, real=True, positive=True)
+def make_index(ind_string):
+    return sympy.symbols(ind_string, real=True, positive=True)
 
-# def Coordinate(coord_string):
-#     return sympy.func
-
-def TensorDerivative(index, coords, target):
-    """ Takes a comma derivative of a tensor
-    
-    Args:
-        index (sympy.Symbol): index to add to the tensor
-        coords (list(sympy.Symbol)): list of the coordinates to take derivatives with respect to
-        target (sympy expression or GRTensor.vals): Target to be differentiated
-        
-    Returns:
-        GRTensor
-    """
-    return GRTensor([index], sympy.derive_by_array(target,coords))
-
-def CovariantDerivative_old(index, coords, metric, target,targettype='upper'):
-    """ Takes the covariant (semicolon) derivative of a tensor.
-    
-    Args: 
-        index (sympy.Symbol): index to add to the tensor
-        coords (list(sympy.Symbol)): list of the coordinates to take derivatives with respect to
-        metric (GRMetric): Metric to be differentiated with respect to (connection term)
-        target (GRTensor): Target to be differentiated
-        targettype (string): upper or lower, represents which index type the tensor is
-        
-    Returns:
-        GRTensor of the covariant derivative
-    """
-    if type(target) is GRTensor:
-        if targettype=='upper':
-            dims = len(coords)
-            rank = target.rank + 1
-            d_A = sympy.derive_by_array(target.vals,coords)
-            ch_A = metric.connection().vals
-            t2 = sympy.tensorcontraction(sympy.tensorproduct(ch_A,target.vals),(2,3))
-            cov_A = d_A + t2
-            tmp = target.ind + [index]
-            return GRTensor(tmp, cov_A)
-
-        elif targettype=='lower':
-            dims = len(coords)
-            rank = target.rank + 1
-            d_A = sympy.derive_by_array(target.vals,coords)
-            ch_A = metric.connection().vals
-            t2 = sympy.tensorcontraction(sympy.tensorproduct(ch_A,target.vals),(2,3))
-            cov_A += d_A - t2
-            tmp = target.ind + [index]
-            return GRTensor(tmp, cov_A)
+def tensor_product(T1, T2, contraction=None):
+    new_ind = T1.indices[:] + T2.indices[:]
+    new_vals = sympy.tensorproduct(copy.deepcopy(T1.vals),copy.deepcopy(T2.vals))
+    Tf = Tensor(new_ind,new_vals)
+    if contraction:
+        return tensor_contract(Tf,contraction[0],contraction[1])
     else:
-        return TensorDerivative(index,coords,target)
-
-def CovariantDerivative(target, new_index):
-    ch = grt.ChristoffelFromMetric(target.metric)
-    coords = target.metric.coords
-    A_new = sympy.derive_by_array(target.vals, coords)
-    ind_new = target.indices + [new_index]
-    contracting_index = 2 + target.rank
-    for ind in target.indices:
-        if ind.is_positive:
-            A_new += sympy.tensorcontraction(sympy.tensorproduct(ch.vals[:,:,:],target.vals),(2,contracting_index))
-        elif ind.is_negative:
-            A_new -= sympy.tensorcontraction(sympy.tensorproduct(ch.vals[:,:,:],target.vals),(0,contracting_index))
-    return grt.GRTensor(ind_new,A_new,target.metric) 
-
-def Product(tensor1,tensor2):
-    i = tensor1.rank
-    j = tensor2.rank
-    dims = tensor1.metric.dims
-    tmp = np.zeros()
-            
+        return Tf
         
-            
-#     return sympy.tensorcontraction(sympy.tensorproduct(tensor1.vals,tensor2.vals),i)
+    return Tensor(new_ind,new_vals)
+
+def tensor_contract(T,ind1,ind2):
+    if ind1*ind2 > 0:
+        raise AttributeError("Index 1 and 2 cannot be in the same state")
+    i1 = T.indices.index(ind1)
+    i2 = T.indices.index(ind2)
+    
+    new_indices = T.indices
+    new_indices.remove(ind1)
+    new_indices.remove(ind2)
+    new_vals = sympy.tensorcontraction(T.vals,(i1,i2))
+    return Tensor(new_indices,new_vals)
 
 def ChristoffelFromMetric(metric):
-    metric_upper = metric.get_metric_upper()
-    metric_lower = metric.get_metric_lower()
+    metric_upper = metric.vals_raised()
+    metric_lower = metric.vals_lowered()
 
     tmp = []
     for i in range(metric.dims):
@@ -98,30 +45,57 @@ def ChristoffelFromMetric(metric):
     ch = sympy.Array(tmp,(metric.dims,metric.dims,metric.dims))
     a,b,c = sympy.symbols("a b c",real=True,positive=True)
     
-    return GRTensor([a,-b,-c],ch,metric)
-def TensorProduct(T1,T2,contraction_indices=None):
-    full_product = sympy.tensorproduct(T1.vals,T2.vals)
-    new_indices = T1.indices + T2.indices
-    new_tensor = GRTensor(new_indices,full_product,T1.metric)
-    return TensorContract(new_tensor)
+    return GRTensor([a,-b,-c],ch)
 
-def TensorContract(T,contraction_indices=None):
-    if contraction_indices:
-        c1,c2 = contraction_indices
-        new_indices = T.indices[:]
-        new_indices.remove(c1)
-        new_indices.remove(c2)
-        new_vals = sympy.tensorcontraction(T.vals,(T.indices.index(c1),T.indices.index(c2)))
-        return GRTensor(new_indices,new_vals,T.metric)
-    for ind in T.indices:
-        if -1*ind in T.indices:
-            new_indices = T.indices[:]
-            new_indices.remove(ind)
-            new_indices.remove(-1*ind)
-            new_vals = sympy.tensorcontraction(T.vals,(T.indices.index(ind),T.indices.index(-ind)))
-            return GRTensor(new_indices,new_vals,T.metric)
-    print("Contraction failed: no matched indices")
-    return T
+
+def split_list(inds,sep):
+    if sep in inds:
+        inds1 = inds[:inds.index(sep)]
+        inds2 = inds[inds.index(sep)+1:]
+    else:
+        inds1 = inds[:]
+        inds2 = []
+    return inds1,inds2
+        
+        
+def diff(target,metric,index):
+    if type(target) == Tensor or type(target) == Metric:
+        new_indices = target.indices[:] + [index]
+        coords = metric.coords[:] 
+        new_vals = sympy.derive_by_array(target.vals,coords)
+        return Tensor(new_indices,new_vals)
+    else:
+        new_indices = [index]
+        coords = metric.coords[:]
+        new_vals = sympy.derive_by_array(target,coords)
+        return Tensor(new_indices,new_vals)
+
+    
+def add(T1,T2):
+    if type(T1) != Metric and type(T1) != Tensor:
+        raise AttributeError("T1 is not a valid type")
+    if type(T2) != Metric and type(T2) != Tensor:
+        raise AttributeError("T2 is not a valid type")
+    
+    return Tensor(T1.indices[:],T1.vals+T2.vals)
+        
+    
+def subtract(T1,T2):
+    if type(T1) != Metric and type(T1) != Tensor:
+        raise AttributeError("T1 is not a valid type")
+    if type(T2) != Metric and type(T2) != Tensor:
+        raise AttributeError("T2 is not a valid type")
+    
+    return Tensor(T1.indices[:],T1.vals-T2.vals)
+    
+    
+def cov_diff(target,metric,index):
+    new_indices = target.indices[:] + [index]
+    coords = metric.coords[:]
+    return target
+        
+            
+#     return sympy.tensorcontraction(sympy.tensorproduct(tensor1.vals,tensor2.vals),i)
 
 def Riemann4FromMetric(metric):
     return

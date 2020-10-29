@@ -2,100 +2,99 @@ import sympy
 import copy
 
 
-class GRTensor:
-    """ A Tensor object that is used similarly to a data type.
-
-    Args:
-        indices (list): a list of sympy symbols to represent the indices of the tensor.
-            The number of indices must match the rank of the tensor.
-        tensor (sympy Array): an N-dimensional array containing the tensor values.
-
-    Attributes:
-        ind (list): a copy of the indices argument, containing the indices of the tensor.
-        vals (sympy Array): an N-dimensional array containing the tensor values.
-        rank (int): the rank of the tensor (number of indices)
-
-    """
-
-    def __init__(self,indices,tensor_vals,associated_metric):
-        """ class initialization
-
-        Args: 
-            indices (dict): keys are the tensor symbol, the values are upper or lower 
-        """
-        self.indices=indices[:]
-        self.rank=len(indices)
-        self.vals=copy.deepcopy(tensor_vals)
-        self.metric=associated_metric
+#--------------------------------------------------------
+class Tensor():
+    def __init__(self, indices, values):
+        self.indices = indices[:]
+        self.rank = len(indices)
+        self.vals = sympy.Array(copy.deepcopy(values))
         return
-
+    
     def __repr__(self):
         return repr(self.vals)
+    
+    def copy(self):
+        return Tensor(self.indices[:],copy.deepcopy(self.vals))
+    
+    def change_index(self,old_index,new_index):
+        if old_index*new_index < 0:
+            raise ValueError("Index types do not match")
 
+        if old_index in self.indices:
+            return Tensor([new_index if i==old_index else i for i in self.indices],self.vals)
+        else:
+            return self
     
-    def raise_index(self,index):
-        if -index in self.indices:
-            self.indices[self.indices.index(-index)] = index
-    
-    def set_indices(self,indices):
-        assert len(indices)==self.rank # Preserve Rank
-        self.indices=indices[:]
-        
+    def swap_indices(self,ind1,ind2):
+        if ind1 not in self.indices or ind2 not in self.indices: 
+            raise AttributeError("Index not found in tensor indices")
             
-            #>> Do a tensor product then contraction with metric tensor
+        a1 = self.indices.index(ind1)
+        a2 = self.indices.index(ind2)
+        self.vals = sympy.Array(np.array(self.vals.tolist()).swapaxes(a1,a2))
+        return Tensor(self.indices[:],copy.deepcopy(self.vals))
+#--------------------------------------------------------
 
-
-
-######################################################################
-
-class GRMetric:
-    """ A spacetime metric data type to handle calculations and metric properties.
-
-    Args:
-        coords (list): a list of sympy symbols representing the coordinates of the system. This determines the size of the metric.
-        metric (sympy Array): a 2D array containing the metric values.
-
-    Attributes:
-        coords (list): list of the coordinates involved.
-        dims (int): size of the metric (dims x dims).
-        lowered (sympy Array): values of the lowered metric
-        raised (sympy Array): values of the raised metric
-
-    """
-    def __init__(self,coords, metric, state):
+#--------------------------------------------------------
+class Metric(Tensor):
+    def __init__(self,coords, indices, values):
+        super().__init__(indices,values)
         self.coords = coords[:]
         self.dims = len(coords)
-        self.metric = sympy.Matrix(metric)
-        self.state = state
+        self.vals = sympy.Matrix(self.vals)
         return
-
+    
     def __repr__(self):
-        return repr(self.metric)
-
-    def _change_state_(self,newstate):
-        if self.state==newstate:
-            return
-        self.state = newstate
-        self.metric = self.metric.inv().copy()
-        return
-
-    def get_metric_lower(self):
-        if self.state=='lower':
-            return self.metric.copy()
-        elif self.state=='upper':
-            return self.metric.inv().copy()
+        return repr(self.vals)
+    
+    def get_state(self):
+        i1 = self.indices[0].is_positive
+        i2 = self.indices[1].is_positive
+        state=""
+        if i1==True and i2==True:
+            state="++"
+        elif i1==True and i2==False:
+            state="+-"
+        elif i1==False and i2==True:
+            state="-+"
+        elif i1==False and i2==False:
+            state="--"
+        return state
+    
+    def vals_lowered(self):
+        state = self.get_state()
+        metricvals = self.vals
+        if state == '--':
+            return metricvals
+        elif state == '++':
+            return metricvals.inv()
         else:
-            raise ValueError("Metric is in an invalid state")
+            return None
         
-    def get_metric_upper(self):
-        if self.state=='upper':
-            return self.metric.copy()
-        elif self.state=='lower':
-            return self.metric.inv().copy()
+    def vals_raised(self):
+        state = self.get_state()
+        metricvals = self.vals
+        if state == '++':
+            return metricvals
+        elif state == '--':
+            return metricvals.inv()
         else:
-            raise ValueError("Metric is in an invalid state")
-
-    def as_tensor(self,indices):
-        return GRTensor(indices, self.metric, self)
-
-# Make GRIndex class as wrapper for sympy.symbols with real=True and positive=True?
+            return None
+        
+    def raise_metric(self):
+        if self.get_state() == '--':
+            self.vals = self.vals.inv()
+            self.indices = [-1*i for i in self.indices]
+        else:
+            pass
+        return
+    
+    def lower_metric(self):
+        if self.get_state() == '++':
+            self.vals = self.vals.inv()
+            self.indices = [-1*i for i in self.indices]
+        else:
+            pass
+        return        
+        
+#--------------------------------------------------------
