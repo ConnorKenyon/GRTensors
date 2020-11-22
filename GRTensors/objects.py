@@ -5,7 +5,7 @@ import itertools
 
 from . import functions
 
-#--------------------------------------------------------
+#---------------------------------------------------------
 class Tensor():
     def __init__(self, indices, values):
         self.indices = indices[:]
