@@ -7,11 +7,31 @@ from . import functions
 
 #---------------------------------------------------------
 class Tensor():
+    """ A class to represent a Tensor
+    
+    Attributes:
+    indices (list) -- The list of indices for the tensor. Positivity represents upper vs lower indices.
+    rank (int) -- The rank of the tensor.
+    dims (int) -- The number of spacetime dimensions the tensor contains.
+    vals (sympy.Array) -- The dims**rank size array of tensor values
+    
+    Methods:
+    copy() -- Returns a copy of the tensor
+    reset_indices(new_indices) -- Reset the indices while maintaining tensor 
+        properties. this is intended to be used to prep the tensor for 
+        calculations.
+    """
     def __init__(self, indices, values):
         self.indices = indices[:]
         self.rank = len(indices)
-        self.dims = int(len(values)**(1/self.rank))
-        self.vals = sympy.Array(copy.deepcopy(values))
+        try:
+            self.dims = int(len(values)**(1/self.rank))
+        except:
+            self.dims = 0
+        if self.dims == 0:
+            self.vals = values
+        else:
+            self.vals = sympy.Array(copy.deepcopy(values))
         return
     
     def __repr__(self):
@@ -72,43 +92,40 @@ class Tensor():
             return Tensor(self.indices,float(other)*self.vals)
     
     def copy(self):
-        return Tensor(self.indices[:],copy.deepcopy(self.vals))
-    
-    def change_index(self,old_index,new_index):
-        if old_index*new_index < 0:
-            raise ValueError("Index types do not match")
-
-        if old_index in self.indices:
-            return Tensor([new_index if i==old_index else i for i in self.indices],self.vals)
-        else:
-            return self
-    
-    def swap_indices(self,ind1,ind2):
-        if ind1 not in self.indices or ind2 not in self.indices: 
-            raise AttributeError("Index not found in tensor indices")
-            
-        a1 = self.indices.index(ind1)
-        a2 = self.indices.index(ind2)
-        self.vals = sympy.Array(np.array(self.vals.tolist()).swapaxes(a1,a2))
+        """Create a copy of the Tensor
+        """
         return Tensor(self.indices[:],copy.deepcopy(self.vals))
     
     def reset_indices(self,new_indices):
+        """ Safely reset the indices of the tensor.
+        """
         if len(new_indices) != len(self.indices):
+            raise ValueError
+        if [ind > 0 for ind in self.indices] != [ind > 0 for ind in new_indices]:
             raise ValueError
         return Tensor(new_indices,self.vals)
         
-        
-    def autocontract(self):
-        
-        tmp = self.copy()
-        while [ind for ind in tmp.indices if -1*ind in tmp.indices] != []:
-            for ind in self.indices:
-                if -1*ind in self.indices:
-                    return functions.tensor_contract(tmp,ind,-1*ind) 
 #--------------------------------------------------------
 
 #--------------------------------------------------------
 class Metric(Tensor):
+    """ A class to represent a Metric Tensor. Subclass of Tensor.
+    
+    Attributes:
+    coords (list) -- The list of spacetime coordinates
+    indices (list) -- The list of indices for the tensor. Positivity represents upper vs lower indices.
+    rank (int) -- The rank of the tensor.
+    dims (int) -- The number of spacetime dimensions the tensor contains.
+    vals (sympy.Array) -- The dims**rank size array of tensor values
+    
+    Methods:
+    vals_lowered() -- Returns the lowered values, regardless of state
+    vals_raised() -- Returns the raised values, regardless of state
+    copy() -- Returns a copy of the tensor
+    reset_indices(new_indices) -- Reset the indices while maintaining tensor 
+        properties. this is intended to be used to prep the tensor for 
+        calculations.
+    """
     def __init__(self,coords, indices, values):
         super().__init__(indices,values)
         self.coords = coords[:]
@@ -130,6 +147,8 @@ class Metric(Tensor):
     
     
     def get_state(self):
+        """ Get the state of the metric (++, +-, -+, or --)
+        """
         i1 = self.indices[0].is_positive
         i2 = self.indices[1].is_positive
         state=""
@@ -144,6 +163,9 @@ class Metric(Tensor):
         return state
     
     def vals_lowered(self):
+        """ Get the lowered values of the tensor, 
+            inverts values matrix if the metric is not already lowered.
+        """
         state = self.get_state()
         metricvals = self.vals
         if state == '--':
@@ -154,6 +176,9 @@ class Metric(Tensor):
             return None
         
     def vals_raised(self):
+        """ Get the raised values of the tensor, 
+            inverts values matrix if the metric is not already raised.
+        """
         state = self.get_state()
         metricvals = self.vals
         if state == '++':
@@ -163,25 +188,29 @@ class Metric(Tensor):
         else:
             return None
         
-    def raise_metric(self):
-        if self.get_state() == '--':
-            self.vals = self.vals.inv()
-            self.indices = [-1*i for i in self.indices]
-        else:
-            pass
-        return
-    
-    def lower_metric(self):
-        if self.get_state() == '++':
-            self.vals = self.vals.inv()
-            self.indices = [-1*i for i in self.indices]
-        else:
-            pass
-        return        
-    
     def reset_indices(self,new_indices):
+        """ Safely reset metric indices
+        """
         if len(new_indices) != len(self.indices):
+            raise ValueError
+        if [ind > 0 for ind in self.indices] != [ind > 0 for ind in new_indices]:
             raise ValueError
         return Metric(self.coords,new_indices,self.vals)
         
+#     def raise_metric(self):
+#         if self.get_state() == '--':
+#             self.vals = self.vals.inv()
+#             self.indices = [-1*i for i in self.indices]
+#         else:
+#             pass
+#         return
+#     
+#     def lower_metric(self):
+#         if self.get_state() == '++':
+#             self.vals = self.vals.inv()
+#             self.indices = [-1*i for i in self.indices]
+#         else:
+#             pass
+#         return        
+    
 #--------------------------------------------------------
