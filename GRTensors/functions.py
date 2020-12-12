@@ -8,7 +8,6 @@ def make_index(ind_string):
     """Wrapper for sympy.symobls for a real and positive tensor index"""
     return sympy.symbols(ind_string, real=True, positive=True)
 
-# Delete?
 def make_coords(coords_string,dependent_coord=None):
     """Wrapper for sympy.symbols for a real coordinate"""
     if dependent_coord:
