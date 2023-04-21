@@ -1,7 +1,10 @@
 # GRTensors
  
 
- ***GRTensors*** is a python package designed to make the symbolic tensor-based math needed for General Relativity, painless to calculate.
+ ***GRTensors*** is a python package designed for symbolic tensor-based
+ calculations.  The primary design is for General Relativity, however the
+ framework is broadly applicable to all fields that require tensor
+ computations.
 
  ```python
 >>> import GRTensors as grt
